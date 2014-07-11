@@ -9,7 +9,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.3"
+local sVersion = "8.0.0.4"
 
 local MatchingGame = MatchingGame
 local GameLib = GameLib
