@@ -9,8 +9,11 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.4"
+local sVersion = "8.0.0.5"
 
+-----------------------------------------------------------------------------------------------
+-- Upvalues
+-----------------------------------------------------------------------------------------------
 local MatchingGame = MatchingGame
 local GameLib = GameLib
 local ChatSystemLib = ChatSystemLib
@@ -22,6 +25,9 @@ local pairs = pairs
 local ipairs = ipairs
 local unpack = unpack
 
+-----------------------------------------------------------------------------------------------
+-- Initialization
+-----------------------------------------------------------------------------------------------
 local addon = Apollo.GetPackage("Gemini:Addon-1.1").tPackage:NewAddon("BuffedRaid", false, {}, "Gemini:Timer-1.0")
 local GeminiConfig = Apollo.GetPackage("Gemini:Config-1.0").tPackage
 
@@ -93,6 +99,9 @@ function addon:OnEnable()
 	self:CreateConfigTables()
 end
 
+-----------------------------------------------------------------------------------------------
+-- Options and GUI
+-----------------------------------------------------------------------------------------------
 function addon:CreateConfigTables()
 	self.myOptionsTable = {
 		type = "group",
@@ -123,6 +132,18 @@ function addon:OnAnchorMove()
 	self.db.profile.tPos = {l,t,r,b}
 end
 
+function addon:OnSingleBuffButton(wHandler)
+	if Apollo.IsAltKeyDown() then
+		self:ReportFoodToParty()
+	else
+		GameLib.SetTargetUnit(wHandler:GetData())
+	end
+end
+
+-----------------------------------------------------------------------------------------------
+-- Wipe check
+-----------------------------------------------------------------------------------------------
+
 function addon:WipeCheck()
 	self.nRaidMembersInCombat = 0
 	for i=1, GroupLib.GetMemberCount() do
@@ -147,6 +168,13 @@ function addon:CombatStateChanged(unit, bInCombat)
 	if unit == GameLib.GetPlayerUnit() and not self.wipeTimer then
 		self.wipeTimer = self:ScheduleRepeatingTimer("WipeCheck", 0.5)
 	end
+end
+
+-----------------------------------------------------------------------------------------------
+-- Utility
+-----------------------------------------------------------------------------------------------
+function addon:GetClassColor(unit)
+	return self.tClassToColor[unit:GetClassId()]
 end
 
 function addon:GetPartyMemberByName(sName)
@@ -198,6 +226,9 @@ function addon:FindBuffFromListByName(unit, tList)
 	return false
 end
 
+-----------------------------------------------------------------------------------------------
+-- Reporting
+-----------------------------------------------------------------------------------------------
 function addon:ReportFoodToParty()
 	local sWithoutFood = "Starving people (give them some food maybe?): "
 	if not self.RaidFrameBase then return end
@@ -225,7 +256,7 @@ function addon:ReportFoodToParty()
 	end
 end
 
-function addon:ReportPotionToParty()
+function addon:ReportPotionsToParty()
 	local sWithoutPotion = "Combat started 5 sec ago. Potionless (poop a poot?): "
 	local sWithoutFieldTech = "Combat started 5 sec ago. FieldTechless (poop a poot?): "
 	if not self.RaidFrameBase then return end
@@ -237,7 +268,6 @@ function addon:ReportPotionToParty()
 		if groupMember then
 			local sName = groupMember.strCharacterName
 			if sName then
-		--local sName = v.wndRaidMemberBtn:FindChild("RaidMemberName"):GetText()
 				local unit = self:GetPartyMemberByName(sName)
 				if unit then
 					local potionStuff = self:FindBuffFromListByName(unit, tBuffList)
@@ -276,25 +306,16 @@ function addon:ReportPotionToParty()
 	end
 end
 
-function addon:OnSingleBuffButton(wHandler)
-	if Apollo.IsAltKeyDown() then
-		self:ReportFoodToParty()
-	else
-		GameLib.SetTargetUnit(wHandler:GetData())
-	end
-end
-
-function addon:GetClassColor(unit)
-	return self.tClassToColor[unit:GetClassId()]
-end
-
+-----------------------------------------------------------------------------------------------
+-- OnUpdate ( or well 0.1 timer )
+-----------------------------------------------------------------------------------------------
 local nOffsetFromTop = 30
 local nIconSize = 21
 function addon:OnUpdate()
 	self.nTime = self.nTime + self.nTimerSpeed
 	-- well not really hooking now are we? :D
 	-- if MatchingGame.IsInPVPGame() then return end -- maybe don't show up in PvP games?
-	--if not self.RaidFrameBase then self.RaidFrameBase = Apollo.GetAddon("RaidFrameBase") return end
+
 	if not self.wBackground then return end
 
 	local bGrouped = GameLib.GetPlayerUnit():IsInYourGroup()
@@ -311,8 +332,6 @@ function addon:OnUpdate()
 		return
 	end
 
-	--/eval SVR("a", Apollo.GetAddon("RaidFrameBase").arMemberIndexToWindow)
-	--local l,t,r,b = self.RaidFrameBase.wndMain:GetAnchorOffsets()
 	local l,t,r,b = self.wAnchor:GetAnchorOffsets()
 
 	self.wBackground:SetAnchorOffsets(l-2, t+nOffsetFromTop-2, l+nIconSize+2, t+nOffsetFromTop+GroupLib.GetMemberCount()*nIconSize+2)
@@ -323,21 +342,21 @@ function addon:OnUpdate()
 		if groupMember then
 			local sName = groupMember.strCharacterName
 			if sName then
-		--if self.RaidFrameBase.arMemberIndexToWindow[k] then
-		--	local sName = self.RaidFrameBase.arMemberIndexToWindow[k].wndRaidMemberBtn:FindChild("RaidMemberName"):GetText()
 				local unit = self:GetPartyMemberByName(sName)
 				if unit then
+					self.tFoodIcons[k]:SetAnchorOffsets(l, t+nOffsetFromTop+(k-1)*nIconSize, l+nIconSize, t+nOffsetFromTop+k*nIconSize)
 					self.tPotionIcons[k]:SetAnchorOffsets(l+nIconSize+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+2*nIconSize, t+nOffsetFromTop+k*nIconSize)
 					self.tFieldTechIcons[k]:SetAnchorOffsets(l+nIconSize*2+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+3*nIconSize, t+nOffsetFromTop+k*nIconSize)
+					
 					local foodStuff = self:FindBuffByName(unit, "Stuffed!")
-					self.tFoodIcons[k]:SetAnchorOffsets(l, t+nOffsetFromTop+(k-1)*nIconSize, l+nIconSize, t+nOffsetFromTop+k*nIconSize)
+
 					self.tFoodIcons[k]:Show(bGrouped)
 					self.tFoodIcons[k]:SetData(unit)
 					if foodStuff then
-						self.tFoodIcons[k]:SetSprite(foodStuff[1])
+						self.tFoodIcons[k]:FindChild("Icon"):SetSprite(foodStuff[1])
 						self.tFoodIcons[k]:SetTooltip(sName.." - "..foodStuff[2])
 					else
-						self.tFoodIcons[k]:SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
+						self.tFoodIcons[k]:FindChild("Icon"):FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
 						self.tFoodIcons[k]:SetTooltip(sName)
 					end
 
@@ -346,11 +365,11 @@ function addon:OnUpdate()
 					self.tPotionIcons[k]:Show(bGrouped)
 					self.tPotionIcons[k]:SetData(unit)
 					if potionStuff then
-						self.tPotionIcons[k]:SetSprite(potionStuff[1])
+						self.tPotionIcons[k]:FindChild("Icon"):SetSprite(potionStuff[1])
 						self.tPotionIcons[k]:SetTooltip(sName.." - "..potionStuff[2])
 						self.tPotionIcons[k]:FindChild("Name"):SetText("")
 					else
-						self.tPotionIcons[k]:SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
+						self.tPotionIcons[k]:FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
 						self.tPotionIcons[k]:SetTooltip(sName)
 					end
 
@@ -359,11 +378,11 @@ function addon:OnUpdate()
 					self.tFieldTechIcons[k]:Show(bGrouped)
 					self.tFieldTechIcons[k]:SetData(unit)
 					if fieldTechStuff then
-						self.tFieldTechIcons[k]:SetSprite(fieldTechStuff[1])
+						self.tFieldTechIcons[k]:FindChild("Icon"):SetSprite(fieldTechStuff[1])
 						self.tFieldTechIcons[k]:SetTooltip(sName.." - "..fieldTechStuff[2])
 						self.tFieldTechIcons[k]:FindChild("Name"):SetText("")
 					else
-						self.tFieldTechIcons[k]:SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
+						self.tFieldTechIcons[k]:FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
 						self.tFieldTechIcons[k]:SetTooltip(sName)
 						self.tFieldTechIcons[k]:FindChild("Name"):SetText(sName)
 						self.tFieldTechIcons[k]:FindChild("Name"):SetTextColor(self:GetClassColor(unit))
@@ -375,8 +394,8 @@ function addon:OnUpdate()
 		end
 	end
 
-	if self.bRaidInCombat and self.bRaidInCombat ~= self.bRaidInCombatLastState then
-		self:ScheduleTimer("ReportPotionToParty", 5)
+	if bGrouped and self.bRaidInCombat and self.bRaidInCombat ~= self.bRaidInCombatLastState then
+		self:ScheduleTimer("ReportPotionsToParty", 5)
 		self.bRaidInCombatLastState = self.bRaidInCombat
 	end
 end
