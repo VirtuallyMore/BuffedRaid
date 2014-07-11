@@ -1,10 +1,15 @@
+-----------------------------------------------------------------------------------------------
+-- BuffedRaid
+-- Addon to track if your raid is fed and potioned up.
+-- Created by: Caleb - calebzor@gmail.com
+-----------------------------------------------------------------------------------------------
 require "Window"
 require "GameLib"
 require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.1"
+local sVersion = "8.0.0.2"
 
 local MatchingGame = MatchingGame
 local GameLib = GameLib
@@ -290,4 +295,3 @@ function addon:HookToRaidFrame()
 		self.bRaidInCombatLastState = self.bRaidInCombat
 	end
 end
-
