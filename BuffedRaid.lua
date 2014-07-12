@@ -9,7 +9,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.6"
+local sVersion = "8.0.0.7"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
