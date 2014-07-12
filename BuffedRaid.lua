@@ -9,7 +9,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.7"
+local sVersion = "8.0.0.8"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -26,11 +26,99 @@ local ipairs = ipairs
 local unpack = unpack
 
 -----------------------------------------------------------------------------------------------
--- Initialization
+-- Load packages
 -----------------------------------------------------------------------------------------------
 local addon = Apollo.GetPackage("Gemini:Addon-1.1").tPackage:NewAddon("BuffedRaid", false, {}, "Gemini:Timer-1.0")
 local GeminiConfig = Apollo.GetPackage("Gemini:Config-1.0").tPackage
+local GeminiGUI = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
+-----------------------------------------------------------------------------------------------
+-- Window definitions
+-----------------------------------------------------------------------------------------------
+local tSingleBuffDef = {
+	AnchorOffsets = { 0, 0, 24, 24 },
+	Class = "Button",
+	Base = "",
+	Font = "CRB_Interface7_BB",
+	ButtonType = "PushButton",
+	DT_VCENTER = true,
+	BGColor = "UI_BtnBGDefault",
+	TextColor = "UI_BtnTextDefault",
+	NormalTextColor = "UI_BtnTextDefault",
+	PressedTextColor = "UI_BtnTextDefault",
+	FlybyTextColor = "UI_BtnTextDefault",
+	PressedFlybyTextColor = "UI_BtnTextDefault",
+	DisabledTextColor = "UI_BtnTextDefault",
+	Name = "SingleBuff",
+	AutoScaleTextOff = 0,
+	Events = {
+		ButtonSignal = "OnSingleBuffButton",
+	},
+	Children = {
+		{
+			AnchorOffsets = { 4, 0, 1000, 20 },
+			AnchorPoints = { 1, 0, 0, 0 },
+			RelativeToClient = true,
+			Font = "CRB_Interface9_BO",
+			BGColor = "UI_WindowBGDefault",
+			TextColor = "UI_WindowTextDefault",
+			Name = "Name",
+			IgnoreMouse = true,
+			NoClip = true,
+			AutoScaleTextOff = 1,
+			NewWindowDepth = 1,
+			IgnoreTooltipDelay = true,
+		},
+		{
+			AnchorPoints = { 0, 0, 1, 1 },
+			RelativeToClient = true,
+			BGColor = "UI_WindowBGDefault",
+			TextColor = "UI_WindowTextDefault",
+			Name = "Icon",
+			Picture = true,
+			NewWindowDepth = 1,
+			IgnoreTooltipDelay = true,
+		},
+	},
+}
+
+local tBackgroundDef = {
+	AnchorOffsets = { 1, 1, 31, 351 },
+	RelativeToClient = true,
+	BGColor = "UI_WindowBGDefault",
+	TextColor = "UI_WindowTextDefault",
+	Name = "Background",
+	Picture = true,
+	SwallowMouseClicks = true,
+	Overlapped = true,
+	Sprite = "CRB_DatachronSprites:sprDCM_ListModeBacker",
+	IgnoreMouse = true,
+	NewWindowDepth = 1,
+}
+
+local tAnchorDef = {
+	AnchorOffsets = { 169, 8, 289, 37 },
+	RelativeToClient = true,
+	Text = "   BuffedRaid anchor",
+	Name = "Anchor",
+	Border = true,
+	Picture = true,
+	SwallowMouseClicks = true,
+	Moveable = true,
+	Overlapped = true,
+	BGColor = "white",
+	IgnoreTooltipDelay = true,
+	Sprite = "CRB_Basekit:kitBase_HoloBlue_InsetBorder_Thin",
+	DT_VCENTER = true,
+	Events = {
+		WindowMove = "OnAnchorMove",
+	},
+}
+
+
+-----------------------------------------------------------------------------------------------
+-- Initialization
+-----------------------------------------------------------------------------------------------
 local nOffsetFromTop = 30
 local nIconSize = 21
 
@@ -73,41 +161,34 @@ function addon:OnInitialize()
 end
 
 function addon:OnEnable()
-	self.wAnchor = Apollo.LoadForm("BuffedRaid.xml", "Anchor", nil, self)
+	self.wAnchor = GeminiGUI:Create(tAnchorDef):GetInstance()
 	self.wAnchor:SetAnchorOffsets(unpack(self.db.profile.tPos))
 	self.wAnchor:Show(self.db.profile.bAnchorLocked)
 
-	self.wBackground = Apollo.LoadForm("BuffedRaid.xml", "Background", nil, self)
+	self.wBackground = GeminiGUI:Create(tBackgroundDef):GetInstance()
 	self.wBackground:Show(true)
-	self.wBackground2 = Apollo.LoadForm("BuffedRaid.xml", "Background", nil, self)
+	self.wBackground2 = GeminiGUI:Create(tBackgroundDef):GetInstance()
 	self.wBackground2:Show(true)
-	self.wBackground3 = Apollo.LoadForm("BuffedRaid.xml", "Background", nil, self)
+	self.wBackground3 = GeminiGUI:Create(tBackgroundDef):GetInstance()
 	self.wBackground3:Show(true)
 
-	self:ScheduleRepeatingTimer("OnUpdate", self.nTimerSpeed)
-
 	for i= 1, 40 do
-		self.tFoodIcons[i] = Apollo.LoadForm("BuffedRaid.xml", "SingleBuff", nil, self)
+		self.tFoodIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tFoodIcons[i]:Show(false)
-	end
-
-	for i= 1, 40 do
-		self.tPotionIcons[i] = Apollo.LoadForm("BuffedRaid.xml", "SingleBuff", nil, self)
+		self.tPotionIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tPotionIcons[i]:Show(false)
-	end
-
-	for i= 1, 40 do
-		self.tFieldTechIcons[i] = Apollo.LoadForm("BuffedRaid.xml", "SingleBuff", nil, self)
+		self.tFieldTechIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tFieldTechIcons[i]:Show(false)
 	end
 
 	self:RepositionWindows()
 
+	self:CreateConfigTables()
+
 	Apollo.RegisterEventHandler("Group_Updated", "OnGroup_Updated", self)
 	Apollo.RegisterEventHandler("Group_Join", "OnGroup_Updated", self)
 	Apollo.RegisterEventHandler("UnitEnteredCombat", "CombatStateChanged", self)
-
-	self:CreateConfigTables()
+	self:ScheduleRepeatingTimer("OnUpdate", self.nTimerSpeed)
 end
 
 -----------------------------------------------------------------------------------------------
