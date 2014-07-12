@@ -1,6 +1,7 @@
 -----------------------------------------------------------------------------------------------
 -- BuffedRaid
 -- Addon to track if your raid is fed and potioned up.
+-- Slash command: /br or /BuffedRaid
 -- Created by: Caleb - calebzor@gmail.com
 -----------------------------------------------------------------------------------------------
 require "Window"
@@ -9,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.8"
+local sVersion = "8.0.0.13"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -114,7 +115,6 @@ local tAnchorDef = {
 		WindowMove = "OnAnchorMove",
 	},
 }
-
 
 -----------------------------------------------------------------------------------------------
 -- Initialization
@@ -269,6 +269,7 @@ function addon:CreateConfigTables()
 	GeminiConfig:RegisterOptionsTable("BuffedRaid", self.myOptionsTable)
 
 	Apollo.RegisterSlashCommand("BuffedRaid", "OpenMenu", self)
+	Apollo.RegisterSlashCommand("buffedraid", "OpenMenu", self)
 	Apollo.RegisterSlashCommand("br", "OpenMenu", self)
 end
 
@@ -320,7 +321,6 @@ end
 -----------------------------------------------------------------------------------------------
 -- Wipe check
 -----------------------------------------------------------------------------------------------
-
 function addon:WipeCheck()
 	self.nRaidMembersInCombat = 0
 	for i=1, GroupLib.GetMemberCount() do
@@ -499,7 +499,6 @@ end
 -----------------------------------------------------------------------------------------------
 -- OnUpdate ( or well 0.1 timer )
 -----------------------------------------------------------------------------------------------
-
 function addon:OnUpdate()
 	self.nTime = self.nTime + self.nTimerSpeed
 	-- well not really hooking now are we? :D
