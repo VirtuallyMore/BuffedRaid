@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.13"
+local sVersion = "8.0.0.14"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -204,14 +204,20 @@ function addon:CreateConfigTables()
 				type = "header",
 				width = "full",
 			},
-			usageWithAlt = {
+			usageWithClick = {
 				order = 2,
+				name = "Clicking one of the icons will make you target that group member. (So you know, you can trade food/pots/field tech to them)",
+				type = "description",
+				width = "full",
+			},
+			usageWithAlt = {
+				order = 3,
 				name = "If you hold down ALT and then click one of the icons, you'll report who is missing food in the party chat.",
 				type = "description",
 				width = "full",
 			},
 			usageWithCtrl = {
-				order = 2,
+				order = 4,
 				name = "If you hold down CTRL and then click one of the icons, you'll report who is missing potions and field tech in the party chat.",
 				type = "description",
 				width = "full",
