@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.14"
+local sVersion = "8.0.0.15"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -52,8 +52,9 @@ local tSingleBuffDef = {
 	DisabledTextColor = "UI_BtnTextDefault",
 	Name = "SingleBuff",
 	AutoScaleTextOff = 0,
+	ewWindowDepth = 1,
 	Events = {
-		ButtonSignal = "OnSingleBuffButton",
+		ButtonSignal = function(...) addon:OnSingleBuffButton(...) end,
 	},
 	Children = {
 		{
@@ -71,6 +72,7 @@ local tSingleBuffDef = {
 			IgnoreTooltipDelay = true,
 		},
 		{
+			AnchorOffsets = { 1, 1, 1, 1 },
 			AnchorPoints = { 0, 0, 1, 1 },
 			RelativeToClient = true,
 			BGColor = "UI_WindowBGDefault",
@@ -79,6 +81,7 @@ local tSingleBuffDef = {
 			Picture = true,
 			NewWindowDepth = 1,
 			IgnoreTooltipDelay = true,
+			IgnoreMouse = true,
 		},
 	},
 }
@@ -90,11 +93,10 @@ local tBackgroundDef = {
 	TextColor = "UI_WindowTextDefault",
 	Name = "Background",
 	Picture = true,
-	SwallowMouseClicks = true,
-	Overlapped = true,
 	Sprite = "CRB_DatachronSprites:sprDCM_ListModeBacker",
 	IgnoreMouse = true,
-	NewWindowDepth = 1,
+	SwallowMouseClicks = true,
+	NeverBringToFront = 1,
 }
 
 local tAnchorDef = {
@@ -112,7 +114,7 @@ local tAnchorDef = {
 	Sprite = "CRB_Basekit:kitBase_HoloBlue_InsetBorder_Thin",
 	DT_VCENTER = true,
 	Events = {
-		WindowMove = "OnAnchorMove",
+		WindowMove = function() addon:OnAnchorMove() end,
 	},
 }
 
@@ -284,6 +286,7 @@ function addon:OpenMenu(_, input)
 end
 
 function addon:OnAnchorMove()
+	--D("window moved")
 	local l,t,r,b = self.wAnchor:GetAnchorOffsets()
 	self.db.profile.tPos = {l,t,r,b}
 	self:RepositionWindows()
@@ -305,16 +308,16 @@ function addon:RepositionWindows()
 	local nGroupMemberCount = GroupLib.GetMemberCount()
 	local l,t,r,b = self.wAnchor:GetAnchorOffsets()
 
-	self:ResizeBackground()
-
 	for k=1, 40 do
 		self.tFoodIcons[k]:SetAnchorOffsets(l, t+nOffsetFromTop+(k-1)*nIconSize, l+nIconSize, t+nOffsetFromTop+k*nIconSize)
 		self.tPotionIcons[k]:SetAnchorOffsets(l+nIconSize+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+2*nIconSize, t+nOffsetFromTop+k*nIconSize)
 		self.tFieldTechIcons[k]:SetAnchorOffsets(l+nIconSize*2+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+3*nIconSize, t+nOffsetFromTop+k*nIconSize)
 	end
+
+	self:ResizeBackground()
 end
 
-function addon:OnSingleBuffButton(wHandler)
+function addon:OnSingleBuffButton(_, wHandler, wControl)
 	if Apollo.IsAltKeyDown() then
 		self:ReportFoodToParty()
 	elseif Apollo.IsControlKeyDown() then
@@ -416,16 +419,20 @@ end
 -----------------------------------------------------------------------------------------------
 function addon:ReportFoodToParty()
 	local sWithoutFood = "Starving people (give them some food maybe?): "
-	if not self.RaidFrameBase then return end
 	local nStarving = 0
-	for k, v in pairs(self.RaidFrameBase.arMemberIndexToWindow) do
-		local sName = v.wndRaidMemberBtn:FindChild("RaidMemberName"):GetText()
-		local unit = self:GetPartyMemberByName(sName)
-		if unit then
-			local foodStuff = self:FindBuffByName(unit, "Stuffed!")
-			if not foodStuff then
-				nStarving = nStarving + 1
-				sWithoutFood = ("%s %s"):format(sWithoutFood, unit:GetName())
+	for k = 1, 40 do
+		local groupMember = GroupLib.GetGroupMember(k)
+		if groupMember then
+			local sName = groupMember.strCharacterName
+			if sName then
+				local unit = self:GetPartyMemberByName(sName)
+				if unit then
+					local foodStuff = self:FindBuffByName(unit, "Stuffed!")
+					if not foodStuff then
+						nStarving = nStarving + 1
+						sWithoutFood = ("%s %s"):format(sWithoutFood, unit:GetName())
+					end
+				end
 			end
 		end
 	end
@@ -444,7 +451,6 @@ end
 function addon:ReportPotionsToParty()
 	local sWithoutPotion = "Combat started 5 sec ago. Potionless (poop a poot?): "
 	local sWithoutFieldTech = "Combat started 5 sec ago. FieldTechless (poop a poot?): "
-	if not self.RaidFrameBase then return end
 	if self.nRaidMembersInCombat < 7 then return end
 	local nPotionless = 0
 	local nFieldTechless = 0
