@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Addon Author="Caleb" APIVersion="8" Name="BuffedRaid" Description="Is your raid fed and potioned up, ready to pull? /br" Version="8.0.0.17">
+<Addon Author="Caleb" APIVersion="8" Name="BuffedRaid" Description="Is your raid fed and potioned up, ready to pull? /br" Version="8.0.1.2">
 	<Script Name="Libs/GeminiAddon/GeminiAddon.lua" />
 	<Script Name="Libs/GeminiDB/GeminiDB-1.0.lua" />
 	<Script Name="Libs/GeminiTimer/GeminiTimer-1.0.lua" />
@@ -7,6 +7,7 @@
 	<Script Name="Libs/GeminiConfig/GeminiConfig-1.0.lua" />
 	<Script Name="BuffedRaid.lua"/>
 </Addon>
+
 
 
 
