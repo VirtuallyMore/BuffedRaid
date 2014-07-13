@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.15"
+local sVersion = "8.0.0.16"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -131,6 +131,7 @@ local defaults = {
 		bShowInPvP = false,
 		bReportAtStartOfCombat = true,
 		bReportEvery3MinInCombat = true,
+		bReportInInstance = false,
 	}
 }
 
@@ -252,6 +253,15 @@ function addon:CreateConfigTables()
 				name = "Reporting",
 				type = "header",
 				width = "full",
+			},
+			bReportInInstance = {
+				order = 20,
+				name = "Report in /instance when in instanced group",
+				desc = "Allow reporting to /instance.",
+				type = "toggle",
+				width = "full",
+				get = function(info) return self.db.profile[info[#info]] end,
+				set = function(info, v) self.db.profile[info[#info]] = v end,
 			},
 			bReportAtStartOfCombat = {
 				order = 20,
@@ -417,6 +427,15 @@ end
 -----------------------------------------------------------------------------------------------
 -- Reporting
 -----------------------------------------------------------------------------------------------
+function addon:ReportToChat(sMsg)
+	local bInMatchIngGame = MatchingGame.IsInMatchingInstance()
+	if not bInMatchIngGame then -- don't try to report to party when in instanced stuff
+		ChatSystemLib.Command(("/p %s"):format(sMsg))
+	elseif bInMatchIngGame and self.db.profile.bReportInInstance then -- only report in instance chat if it is also turned in the options
+		ChatSystemLib.Command(("/i %s"):format(sMsg))
+	end
+end
+
 function addon:ReportFoodToParty()
 	local sWithoutFood = "Starving people (give them some food maybe?): "
 	local nStarving = 0
@@ -438,7 +457,7 @@ function addon:ReportFoodToParty()
 	end
 	if nStarving > 0 then
 		if (self.nTime - self.nLastPotionReport) > 5 then
-			ChatSystemLib.Command(("/p %s"):format(sWithoutFood))
+			self:ReportToChat(sWithoutFood)
 			self.nLastPotionReport = self.nTime
 		else
 			Print(("Can't spam party chat! Wait another: %.1f then try again."):format(5- self.nTime - self.nLastPotionReport))
@@ -477,7 +496,7 @@ function addon:ReportPotionsToParty()
 	end
 	if nPotionless > 0 then
 		if (self.nTime - self.nLastPotionReport) > 1 then
-			ChatSystemLib.Command(("/p %s"):format(sWithoutPotion))
+			self:ReportToChat(sWithoutPotion)
 			self.nLastPotionReport = self.nTime
 		else
 			Print(("Can't spam party chat! Wait another: %.1f then try again."):format(5- self.nTime - self.nLastPotionReport))
@@ -486,11 +505,11 @@ function addon:ReportPotionsToParty()
 		Print("Everyone has potions!")
 	end
 	if nFieldTechless > 0 then
-		if (self.nTime - self.self.nLastFieldTechReport) > 1 then
-			ChatSystemLib.Command(("/p %s"):format(sWithoutFieldTech))
+		if (self.nTime - self.nLastFieldTechReport) > 1 then
+			self:ReportToChat(sWithoutFieldTech)
 			self.nLastFieldTechReport = self.nTime
 		else
-			Print(("Can't spam party chat! Wait another: %.1f then try again."):format(5- self.nTime - self.self.nLastFieldTechReport))
+			Print(("Can't spam party chat! Wait another: %.1f then try again."):format(5- self.nTime - self.nLastFieldTechReport))
 		end
 	else
 		Print("Everyone has field tech!")
