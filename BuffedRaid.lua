@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.0.16"
+local sVersion = "8.0.0.17"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -255,7 +255,7 @@ function addon:CreateConfigTables()
 				width = "full",
 			},
 			bReportInInstance = {
-				order = 20,
+				order = 16,
 				name = "Report in /instance when in instanced group",
 				desc = "Allow reporting to /instance.",
 				type = "toggle",
