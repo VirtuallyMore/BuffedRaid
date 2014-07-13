@@ -16,6 +16,7 @@ Raids or veteran groups as well perhaps. Maybe even rated battlegrounds. Basical
 * Clicking the icon will target that group member (if they are in range) - so you can trade them food or whatever :P
 * Alt clicking the icons will report those missing food buffs in chat.
 * Ctrl clicking the icons will report those missing potions and field tech in chat.
+* Skull icon indicating group member being dead.
 
 ##Configuration window slash command:
 > /br
