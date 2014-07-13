@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.1.4"
+local sVersion = "8.0.1.5"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -132,6 +132,7 @@ local defaults = {
 		bReportAtStartOfCombat = true,
 		bReportEvery3MinInCombat = true,
 		bReportInInstance = false,
+		bEnabled = true,
 	}
 }
 
@@ -201,26 +202,34 @@ function addon:CreateConfigTables()
 	self.myOptionsTable = {
 		type = "group",
 		args = {
-			usageHeader = {
+			bEnabled = {
 				order = 1,
+				name = "Turn the addon on/off",
+				type = "toggle",
+				width = "full",
+				get = function(info) return self.db.profile[info[#info]] end,
+				set = function(info, v) self.db.profile[info[#info]] = v end,
+			},
+			usageHeader = {
+				order = 2,
 				name = "Usage:",
 				type = "header",
 				width = "full",
 			},
 			usageWithClick = {
-				order = 2,
+				order = 3,
 				name = "Clicking one of the icons will make you target that group member. (So you know, you can trade food/pots/field tech to them)",
 				type = "description",
 				width = "full",
 			},
 			usageWithAlt = {
-				order = 3,
+				order = 4,
 				name = "If you hold down ALT and then click one of the icons, you'll report who is missing food in the party chat.",
 				type = "description",
 				width = "full",
 			},
 			usageWithCtrl = {
-				order = 4,
+				order = 5,
 				name = "If you hold down CTRL and then click one of the icons, you'll report who is missing potions and field tech in the party chat.",
 				type = "description",
 				width = "full",
@@ -248,12 +257,12 @@ function addon:CreateConfigTables()
 				get = function(info) return self.db.profile[info[#info]] end,
 				set = function(info, v) self.db.profile[info[#info]] = v end,
 			},
-			reportingHeader = {
-				order = 14,
-				name = "Reporting",
-				type = "header",
-				width = "full",
-			},
+			-- reportingHeader = {
+			-- 	order = 14,
+			-- 	name = "Reporting",
+			-- 	type = "header",
+			-- 	width = "full",
+			-- },
 			bReportInInstance = {
 				order = 16,
 				name = "Report in /instance when in instanced group",
@@ -532,6 +541,7 @@ end
 -----------------------------------------------------------------------------------------------
 function addon:OnUpdate()
 	self.nTime = self.nTime + self.nTimerSpeed
+	if not self.db.profile.bEnabled then self:HideAll() return end
 	-- well not really hooking now are we? :D
 	if MatchingGame.IsInPVPGame() and not self.db.profile.bShowInPvP then self:HideAll() return end -- don't show in PvP
 
