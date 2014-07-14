@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "8.0.1.5"
+local sVersion = "8.0.1.6"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -339,11 +339,13 @@ end
 function addon:OnSingleBuffButton(_, wHandler, wControl)
 	if Apollo.IsAltKeyDown() then
 		self:ReportFoodToParty()
-	elseif Apollo.IsControlKeyDown() then
-		self:ReportPotionsToParty()
-	else
-		GameLib.SetTargetUnit(wHandler:GetData())
+		return
 	end
+	if Apollo.IsControlKeyDown() then
+		self:ReportPotionsToParty(true)
+		return
+	end
+	GameLib.SetTargetUnit(wHandler:GetData())
 end
 
 -----------------------------------------------------------------------------------------------
@@ -476,10 +478,10 @@ function addon:ReportFoodToParty()
 	end
 end
 
-function addon:ReportPotionsToParty()
-	local sWithoutPotion = "Combat started 5 sec ago. Potionless (poop a poot?): "
-	local sWithoutFieldTech = "Combat started 5 sec ago. FieldTechless (poop a poot?): "
-	if self.nRaidMembersInCombat < 7 then return end
+function addon:ReportPotionsToParty(bFromClick)
+	local sWithoutPotion = "Potionless (poop a poot?): "
+	local sWithoutFieldTech = "FieldTechless (poop a poot?): "
+	if self.nRaidMembersInCombat < 7 and not bFromClick then return end
 	local nPotionless = 0
 	local nFieldTechless = 0
 	for k = 1, 40 do
