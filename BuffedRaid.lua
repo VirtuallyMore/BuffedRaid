@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.10"
+local sVersion = "9.0.1.11"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -259,7 +259,7 @@ function addon:CreateConfigTables()
 				set = function(info, v) self.db.profile[info[#info]] = v end,
 			},
 			bShowInPvP = {
-				order = 15,
+				order = 11,
 				name = "Show in isntanced PvP",
 				desc = "Toggle where to show the buff tracker when inside instanced PvP ( Battlegrounds, Arena, Warplots )",
 				type = "toggle",
@@ -267,12 +267,12 @@ function addon:CreateConfigTables()
 				get = function(info) return self.db.profile[info[#info]] end,
 				set = function(info, v) self.db.profile[info[#info]] = v end,
 			},
-			-- reportingHeader = {
-			-- 	order = 14,
-			-- 	name = "Reporting",
-			-- 	type = "header",
-			-- 	width = "full",
-			-- },
+			reportingHeader = {
+				order = 14,
+				name = "Reporting",
+				type = "header",
+				width = "full",
+			},
 			bReportInInstance = {
 				order = 16,
 				name = "Report in /instance when in instanced group",
