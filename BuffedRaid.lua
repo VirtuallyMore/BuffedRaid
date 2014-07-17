@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.8"
+local sVersion = "9.0.1.9"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -133,6 +133,7 @@ local defaults = {
 		bReportEvery3MinInCombat = true,
 		bReportInInstance = false,
 		bEnabled = true,
+		bShowInCombat = true,
 	}
 }
 
@@ -248,8 +249,17 @@ function addon:CreateConfigTables()
 				get = function(info) return self.db.profile[info[#info]] end,
 				set = function(info, v) self.db.profile[info[#info]] = v; self.wAnchor:Show(v) end,
 			},
-			bShowInPvP = {
+			bShowInCombat = {
 				order = 10,
+				name = "Show in combat",
+				desc = "Toggle if the display should be shown during combat or not.",
+				type = "toggle",
+				width = "full",
+				get = function(info) return self.db.profile[info[#info]] end,
+				set = function(info, v) self.db.profile[info[#info]] = v end,
+			},
+			bShowInPvP = {
+				order = 15,
 				name = "Show in isntanced PvP",
 				desc = "Toggle where to show the buff tracker when inside instanced PvP ( Battlegrounds, Arena, Warplots )",
 				type = "toggle",
@@ -337,6 +347,10 @@ function addon:RepositionWindows()
 end
 
 function addon:OnSingleBuffButton(_, wHandler, wControl)
+	if Apollo.IsAltKeyDown() and Apollo.IsControlKeyDown() then
+		self:ReportToPlayer(wHandler:GetData())
+		return
+	end
 	if Apollo.IsAltKeyDown() then
 		self:ReportFoodToParty()
 		return
@@ -447,6 +461,30 @@ function addon:ReportToChat(sMsg)
 	end
 end
 
+function addon:Whisper(sTarget, sMsg)
+	ChatSystemLib.Command(("/w %s %s"):format(sTarget, sMsg))
+end
+
+function addon:ReportToPlayer(unit)
+	-- I guess spamming in whispers is fine :D
+	if unit then
+		if not unit:IsInCombat() then -- you can't eat in combat
+			local foodStuff = self:FindBuffByName(unit, "Stuffed!")
+			if not foodStuff then
+				self:Whisper(unit:GetName(), "You must be starving. Eat some food maybe? (food buff missing)")
+			end
+		end
+		local potionStuff = self:FindBuffFromListByName(unit, tBuffList)
+		if not potionStuff then
+			self:Whisper(unit:GetName(), "You don't have any boost (buffs) on. Poop a poot?")
+		end
+		local fieldTechStuff = self:FindBuffFromListByName(unit, tFieldTechBuffList)
+		if not fieldTechStuff then
+			self:Whisper(unit:GetName(), "You don't have any field tech buffs on. Poop a poot?")
+		end
+	end
+end
+
 function addon:ReportFoodToParty()
 	local sWithoutFood = "Starving people (give them some food maybe?): "
 	local nStarving = 0
@@ -545,7 +583,7 @@ function addon:OnUpdate()
 	self.nTime = self.nTime + self.nTimerSpeed
 	if not self.db.profile.bEnabled then self:HideAll() return end
 	-- well not really hooking now are we? :D
-	if MatchingGame.IsInPVPGame() and not self.db.profile.bShowInPvP then self:HideAll() return end -- don't show in PvP
+	if MatchingGame.IsInPVPGame() and not self.db.profile.bShowInPvP or (not self.db.profile.bShowInCombat and GameLib.GetPlayerUnit():IsInCombat()) then self:HideAll() return end -- don't show in PvP
 
 	if not self.wBackground then return end
 
