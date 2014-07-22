@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.11"
+local sVersion = "9.0.1.12"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -25,6 +25,7 @@ local Print = Print
 local pairs = pairs
 local ipairs = ipairs
 local unpack = unpack
+local type = type
 
 -----------------------------------------------------------------------------------------------
 -- Load packages
@@ -396,8 +397,8 @@ end
 -----------------------------------------------------------------------------------------------
 -- Utility
 -----------------------------------------------------------------------------------------------
-function addon:GetClassColor(unit)
-	return self.tClassToColor[unit:GetClassId()]
+function addon:GetClassColor(eClassId)
+	return self.tClassToColor[eClassId]
 end
 
 function addon:GetPartyMemberByName(sName)
@@ -604,6 +605,9 @@ function addon:OnUpdate()
 			local sName = groupMember.strCharacterName
 			if sName then
 				local unit = self:GetPartyMemberByName(sName)
+				self.tFieldTechIcons[k]:FindChild("Name"):SetText(sName)
+				self.tFieldTechIcons[k]:FindChild("Name"):SetTextColor(self:GetClassColor(groupMember.eClassId))
+				self.tFieldTechIcons[k]:Show(bGrouped)
 				if unit then
 					local foodStuff = self:FindBuffByName(unit, "Stuffed!")
 
@@ -641,9 +645,9 @@ function addon:OnUpdate()
 					else
 						self.tFieldTechIcons[k]:FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
 						self.tFieldTechIcons[k]:SetTooltip(sName)
-						self.tFieldTechIcons[k]:FindChild("Name"):SetText(sName)
-						self.tFieldTechIcons[k]:FindChild("Name"):SetTextColor(self:GetClassColor(unit))
 					end
+				else
+					self.tFieldTechIcons[k]:SetTooltip("Out of range: "..sName)
 				end
 			end
 		else
