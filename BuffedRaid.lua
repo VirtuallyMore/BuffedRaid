@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.12"
+local sVersion = "9.0.1.13"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -26,6 +26,7 @@ local pairs = pairs
 local ipairs = ipairs
 local unpack = unpack
 local type = type
+local Event_FireGenericEvent = Event_FireGenericEvent
 
 -----------------------------------------------------------------------------------------------
 -- Load packages
@@ -193,13 +194,28 @@ function addon:OnEnable()
 
 	Apollo.RegisterEventHandler("Group_Updated", "OnGroup_Updated", self)
 	Apollo.RegisterEventHandler("Group_Join", "OnGroup_Updated", self)
+
+	Apollo.RegisterEventHandler("OnGroup_Remove", "GroupLeft", self)
+	Apollo.RegisterEventHandler("OnGroup_Left", "GroupLeft", self)
+	Apollo.RegisterEventHandler("Group_Remove", "GroupLeft", self)
+	Apollo.RegisterEventHandler("Group_Left", "GroupLeft", self)
+
 	Apollo.RegisterEventHandler("UnitEnteredCombat", "CombatStateChanged", self)
 	self:ScheduleRepeatingTimer("OnUpdate", self.nTimerSpeed)
+
+	Apollo.RegisterEventHandler("InterfaceMenuListHasLoaded", "OnInterfaceMenuListHasLoaded", self)
+	Apollo.RegisterEventHandler("BR_OpenMenu", "OpenMenu", self)
 end
 
 -----------------------------------------------------------------------------------------------
 -- Options and GUI
 -----------------------------------------------------------------------------------------------
+function addon:OnInterfaceMenuListHasLoaded()
+	Event_FireGenericEvent("InterfaceMenuList_NewAddOn", "BuffedRaid", { "BR_OpenMenu", "", ""})
+ 
+	self:UpdateInterfaceMenuAlerts()
+end
+
 function addon:CreateConfigTables()
 	self.myOptionsTable = {
 		type = "group",
@@ -322,7 +338,17 @@ function addon:OnAnchorMove()
 	self:RepositionWindows()
 end
 
+function addon:UpdateInterfaceMenuAlerts()
+	local nMemberCount = GroupLib.GetMemberCount()
+	Event_FireGenericEvent("InterfaceMenuList_AlertAddOn", "BuffedRaid", {false, "Group member count: "..nMemberCount, nMemberCount})
+end
+
+function addon:GroupLeft()
+	Event_FireGenericEvent("InterfaceMenuList_AlertAddOn", "BuffedRaid", {false, "", 0}) -- clean up
+end
+
 function addon:OnGroup_Updated()
+	self:UpdateInterfaceMenuAlerts()
 	self:ResizeBackground()
 end
 
