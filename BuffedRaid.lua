@@ -10,7 +10,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.15"
+local sVersion = "9.0.1.16"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -317,6 +317,11 @@ function addon:CreateConfigTables()
 				get = function(info) return self.db.profile[info[#info]] end,
 				set = function(info, v) self.db.profile[info[#info]] = v end,
 			},
+			GeminiConfigScrollingFrameBottomWidgetFix = {
+				order = 9999,
+				name = "",
+				type = "description",
+			},
 		},
 	}
 
@@ -459,6 +464,7 @@ local tBuffList = {
 	"Finesse Boost",
 	"Finess Boost",
 	"Brutality Boost",
+	"Reactive Strikethrough Boost",
 }
 
 local tFieldTechBuffList = {
