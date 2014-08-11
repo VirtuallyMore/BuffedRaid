@@ -4,13 +4,21 @@
 -- Slash command: /br or /BuffedRaid
 -- Created by: Caleb - calebzor@gmail.com
 -----------------------------------------------------------------------------------------------
+
+--[[
+	TODO:
+		localization
+		
+		flask support perhaps
+]]--
+
 require "Window"
 require "GameLib"
 require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.16"
+local sVersion = "9.0.1.17"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
