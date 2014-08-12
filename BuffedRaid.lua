@@ -8,6 +8,7 @@
 --[[
 	TODO:
 		localization
+		
 		flask support perhaps
 ]]--
 
@@ -17,7 +18,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.19"
+local sVersion = "9.0.1.20"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
