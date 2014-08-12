@@ -20,7 +20,6 @@ Raids or veteran groups as well perhaps. Maybe even rated battlegrounds. Basical
 * Skull icon indicating group member being dead.
 * The display can be hidden in combat
 
-
 ##Configuration window slash command:
 > /br
 
