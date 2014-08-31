@@ -18,7 +18,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.20"
+local sVersion = "9.0.1.21"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -478,6 +478,7 @@ local tBuffList = {
 local tFieldTechBuffList = {
 	"Life Drain", -- Elemental Life Drain
 	"Siphon", -- Liquid Confidence
+	"Cleave", -- Bioreactive Acid Membrane
 }
 
 function addon:FindBuffFromListByName(unit, tList)
