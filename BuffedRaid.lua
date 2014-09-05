@@ -7,8 +7,6 @@
 
 --[[
 	TODO:
-		localization
-		
 		flask support perhaps
 ]]--
 
@@ -18,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.21"
+local sVersion = "9.0.1.22"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -148,6 +146,35 @@ local defaults = {
 }
 
 function addon:OnInitialize()
+	self.tBoostIds = {
+		--[32821] = true, -- bolster
+		[35078] = true, -- Liquid Focus -- Reactive Strikethrough Boost
+		[36588] = true, -- Expert Moxie Boost - Moxie Boost
+		[36573] = true, -- Expert Finess Boost - Finess Boost
+		[26594] = true, -- Expert Insight Boost - Insight Boost
+		[35028] = true, -- Expert Brutality Boost - Brutality Boost
+		[38157] = true, -- Expert Grid Boost - Grit boost
+		[36579] = true, -- Expert Tech Boost - Tech boost
+		[35062] = true, -- Reactive Brutality Boost
+		[37054] = true, -- Reactive Finess Boost
+		[37074] = true, -- Reactive Insight Boost
+		[37103] = true, -- Reactive Tech Boost
+		[37091] = true, -- Reactive Moxie Boost
+		[39733] = true, -- zerkOut Neurochems - Unstable Critical Hit Boost
+		[39735] = true, -- Temporal Shimmy Tonic - Unstable Critical Hit Boost
+		[39725] = true, -- Quickstrike Serum - Reactive Critical Hit boost
+	}
+	self.tFieldTechtIds = {
+		--[32821] = true, -- bolster
+		[35213] = true, -- Liquid Confidence - Siphon
+		[35147] = true, -- Life Drain
+		[35164] = true, -- Bioreactive Acid Membrane - Cleave
+	}
+	self.tFoodIds = {
+		-- actually just use "Stuffed!" cuz I can't be bothered to add all food spellIds,
+		GameLib.GetSpell(48443):GetName(), -- "Stuffed!" from Exile Empanadas, we track food by this not by spellId
+	}
+
 	self.db = Apollo.GetPackage("Gemini:DB-1.0").tPackage:New(self, defaults)
 
 	self.nTime = 0
@@ -452,6 +479,17 @@ function addon:GetPartyMemberByName(sName)
 	return false
 end
 
+function addon:FindBuffById(unit, nSpellId)
+	local tBuffs = unit:GetBuffs().arBeneficial
+	if not tBuffs then return false end
+	for k, v in pairs(tBuffs) do
+		if v.splEffect:GetId() == nSpellId then
+			return {v.splEffect:GetIcon(), v.splEffect:GetName()}
+		end
+	end
+	return false
+end
+
 function addon:FindBuffByName(unit, sBuff)
 	local tBuffs = unit:GetBuffs().arBeneficial
 	if not tBuffs then return false end
@@ -463,27 +501,9 @@ function addon:FindBuffByName(unit, sBuff)
 	return false
 end
 
-local tBuffList = {
-	"Reactive",
-	"Grit Boost",
-	"Moxie Boost",
-	"Insight Boost",
-	"Tech Boost",
-	"Finesse Boost",
-	"Finess Boost",
-	"Brutality Boost",
-	"Reactive Strikethrough Boost",
-}
-
-local tFieldTechBuffList = {
-	"Life Drain", -- Elemental Life Drain
-	"Siphon", -- Liquid Confidence
-	"Cleave", -- Bioreactive Acid Membrane
-}
-
-function addon:FindBuffFromListByName(unit, tList)
-	for k, sBuff in pairs(tList) do
-		local buffStuff = self:FindBuffByName(unit, sBuff)
+function addon:FindBuffFromListById(unit, tList)
+	for nSpellId, _ in pairs(tList) do
+		local buffStuff = self:FindBuffById(unit, nSpellId)
 		if buffStuff then
 			return buffStuff
 		end
@@ -511,16 +531,16 @@ function addon:ReportToPlayer(unit)
 	-- I guess spamming in whispers is fine :D
 	if unit then
 		if not unit:IsInCombat() then -- you can't eat in combat
-			local foodStuff = self:FindBuffByName(unit, "Stuffed!")
+			local foodStuff = self:FindBuffByName(unit, self.tFoodIds[1])
 			if not foodStuff then
 				self:Whisper(unit:GetName(), "You must be starving. Eat some food maybe? (food buff missing)")
 			end
 		end
-		local potionStuff = self:FindBuffFromListByName(unit, tBuffList)
+		local potionStuff = self:FindBuffFromListById(unit, self.tBoostIds)
 		if not potionStuff then
 			self:Whisper(unit:GetName(), "You don't have any boost (buffs) on. Poop a poot?")
 		end
-		local fieldTechStuff = self:FindBuffFromListByName(unit, tFieldTechBuffList)
+		local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
 		if not fieldTechStuff then
 			self:Whisper(unit:GetName(), "You don't have any field tech buffs on. Poop a poot?")
 		end
@@ -537,7 +557,7 @@ function addon:ReportFoodToParty()
 			if sName then
 				local unit = self:GetPartyMemberByName(sName)
 				if unit then
-					local foodStuff = self:FindBuffByName(unit, "Stuffed!")
+					local foodStuff = self:FindBuffByName(unit, self.tFoodIds[1])
 					if not foodStuff then
 						nStarving = nStarving + 1
 						sWithoutFood = ("%s %s"):format(sWithoutFood, unit:GetName())
@@ -571,12 +591,12 @@ function addon:ReportPotionsToParty(bFromClick)
 			if sName then
 				local unit = self:GetPartyMemberByName(sName)
 				if unit and not unit:IsDead() then
-					local potionStuff = self:FindBuffFromListByName(unit, tBuffList)
+					local potionStuff = self:FindBuffFromListById(unit, self.tBoostIds)
 					if not potionStuff then
 						nPotionless = nPotionless + 1
 						sWithoutPotion = ("%s %s"):format(sWithoutPotion, unit:GetName())
 					end
-					local fieldTechStuff = self:FindBuffFromListByName(unit, tFieldTechBuffList)
+					local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
 					if not fieldTechStuff then
 						nFieldTechless = nFieldTechless + 1
 						sWithoutFieldTech = ("%s %s"):format(sWithoutFieldTech, unit:GetName())
@@ -650,7 +670,7 @@ function addon:OnUpdate()
 				self.tFieldTechIcons[k]:FindChild("Name"):SetTextColor(self:GetClassColor(groupMember.eClassId))
 				self.tFieldTechIcons[k]:Show(bGrouped)
 				if unit then
-					local foodStuff = self:FindBuffByName(unit, "Stuffed!")
+					local foodStuff = self:FindBuffByName(unit, self.tFoodIds[1])
 
 					self.tFoodIcons[k]:Show(bGrouped)
 					self.tFoodIcons[k]:SetData(unit)
@@ -662,7 +682,7 @@ function addon:OnUpdate()
 						self.tFoodIcons[k]:SetTooltip(sName)
 					end
 
-					local potionStuff = self:FindBuffFromListByName(unit, tBuffList)
+					local potionStuff = self:FindBuffFromListById(unit, self.tBoostIds)
 
 					self.tPotionIcons[k]:Show(bGrouped)
 					self.tPotionIcons[k]:SetData(unit)
@@ -675,7 +695,7 @@ function addon:OnUpdate()
 						self.tPotionIcons[k]:SetTooltip(sName)
 					end
 
-					local fieldTechStuff = self:FindBuffFromListByName(unit, tFieldTechBuffList)
+					local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
 
 					self.tFieldTechIcons[k]:Show(bGrouped)
 					self.tFieldTechIcons[k]:SetData(unit)
