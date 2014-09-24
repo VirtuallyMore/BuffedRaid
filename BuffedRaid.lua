@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.22"
+local sVersion = "9.0.1.23"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -151,7 +151,7 @@ function addon:OnInitialize()
 		[35078] = true, -- Liquid Focus -- Reactive Strikethrough Boost
 		[36588] = true, -- Expert Moxie Boost - Moxie Boost
 		[36573] = true, -- Expert Finess Boost - Finess Boost
-		[26594] = true, -- Expert Insight Boost - Insight Boost
+		[36594] = true, -- Expert Insight Boost - Insight Boost
 		[35028] = true, -- Expert Brutality Boost - Brutality Boost
 		[38157] = true, -- Expert Grid Boost - Grit boost
 		[36579] = true, -- Expert Tech Boost - Tech boost
