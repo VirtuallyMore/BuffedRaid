@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.23"
+local sVersion = "9.0.1.24"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -560,7 +560,11 @@ function addon:ReportFoodToParty()
 					local foodStuff = self:FindBuffByName(unit, self.tFoodIds[1])
 					if not foodStuff then
 						nStarving = nStarving + 1
-						sWithoutFood = ("%s %s"):format(sWithoutFood, unit:GetName())
+						if nStarving == 1 then
+							sWithoutFood = ("%s %s"):format(sWithoutFood, unit:GetName())
+						else
+							sWithoutFood = ("%s, %s"):format(sWithoutFood, unit:GetName())
+						end
 					end
 				end
 			end
@@ -594,12 +598,20 @@ function addon:ReportPotionsToParty(bFromClick)
 					local potionStuff = self:FindBuffFromListById(unit, self.tBoostIds)
 					if not potionStuff then
 						nPotionless = nPotionless + 1
-						sWithoutPotion = ("%s %s"):format(sWithoutPotion, unit:GetName())
+						if nPotionless == 1 then
+							sWithoutPotion = ("%s %s"):format(sWithoutPotion, unit:GetName())
+						else
+							sWithoutPotion = ("%s, %s"):format(sWithoutPotion, unit:GetName())
+						end
 					end
 					local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
 					if not fieldTechStuff then
 						nFieldTechless = nFieldTechless + 1
-						sWithoutFieldTech = ("%s %s"):format(sWithoutFieldTech, unit:GetName())
+						if nFieldTechless == 1 then
+							sWithoutFieldTech = ("%s %s"):format(sWithoutFieldTech, unit:GetName())
+						else
+							sWithoutFieldTech = ("%s, %s"):format(sWithoutFieldTech, unit:GetName())
+						end
 					end
 				end
 			end
