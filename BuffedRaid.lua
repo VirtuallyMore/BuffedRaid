@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.24"
+local sVersion = "9.0.1.25"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -350,7 +350,14 @@ function addon:CreateConfigTables()
 				type = "toggle",
 				width = "full",
 				get = function(info) return self.db.profile[info[#info]] end,
-				set = function(info, v) self.db.profile[info[#info]] = v end,
+				set = function(info, v) self.db.profile[info[#info]] = v
+					if not v then
+						if self.combatAnnounceTimer then
+							self:CancelTimer(self.combatAnnounceTimer, true)
+							self.combatAnnounceTimer = nil
+						end
+					end
+				end,
 			},
 			GeminiConfigScrollingFrameBottomWidgetFix = {
 				order = 9999,
