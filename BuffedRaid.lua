@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.25"
+local sVersion = "9.0.1.26"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -163,12 +163,32 @@ function addon:OnInitialize()
 		[39733] = true, -- zerkOut Neurochems - Unstable Critical Hit Boost
 		[39735] = true, -- Temporal Shimmy Tonic - Unstable Critical Hit Boost
 		[39725] = true, -- Quickstrike Serum - Reactive Critical Hit boost
+
+		[39742] = true, -- Avoidance Formatic Foam - Deflect Boost -- even though this is marked as field tech, it does not stack with boosts
+		[35100] = true, -- Epochos Armor Boost - Armor Boost
+		[35106] = true, -- Epochos Resist Boost - Resist Boost
+		[35122] = true, -- Adventus Enduro Boost - Endurance Boost -- this stacks with other boosts - so maybe don't track it?
+		[39715] = true, -- Adventus Critical Hit Boost - Critical Hit Boost
+		[35093] = true, -- Adventus Strikethrough Boost - Unstable Strikethrough Boost
+		[36595] = true, -- Adventus Insight Boost - Insight Boost
+		[36580] = true, -- Adventus Tech Boost - Tech Boost
+		[36574] = true, -- Adventus Finess Boost - Finess Boost
+		[35029] = true, -- Adventus Brutality Boost - Brutality Boost
+		[36589] = true, -- Adventus Moxie Boost - Moxie Boost
+		[35080] = true, -- Aggo-Momentum Focuser - Reactive Strikethrough Boost -- even though this is marked as field tech, it does not stack with boosts
+		[35052] = true, -- Aggression Neurotrancer - Strikethrough Boost -- yep another boost
+		[39736] = true, -- zerkOut Neurotrancer - Unstable Critical Hit Boost -- yep another boost
 	}
 	self.tFieldTechtIds = {
 		--[32821] = true, -- bolster
 		[35213] = true, -- Liquid Confidence - Siphon
 		[35147] = true, -- Life Drain
 		[35164] = true, -- Bioreactive Acid Membrane - Cleave
+
+		[35166] = true, -- Echo Impact Synchronizer - Cleave
+		[35202] = true, -- Impact Filtration Reflector - Reflect
+		[35147] = true, -- Regenerative Draining Gel - Life Drain -- this stacks with Regenerative Impact Gel
+		[35213] = true, -- Regenerative Impact Gel - Siphon -- this stacks with Regenerative Draining Gel
 	}
 	self.tFoodIds = {
 		-- actually just use "Stuffed!" cuz I can't be bothered to add all food spellIds,
