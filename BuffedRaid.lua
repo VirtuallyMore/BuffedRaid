@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.26"
+local sVersion = "9.0.1.27"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -165,6 +165,7 @@ function addon:OnInitialize()
 		[39725] = true, -- Quickstrike Serum - Reactive Critical Hit boost
 
 		[39742] = true, -- Avoidance Formatic Foam - Deflect Boost -- even though this is marked as field tech, it does not stack with boosts
+		[39748] = true, -- QuickReact Formatic Foam - Deflect Critical Hit Boost
 		[35100] = true, -- Epochos Armor Boost - Armor Boost
 		[35106] = true, -- Epochos Resist Boost - Resist Boost
 		[35122] = true, -- Adventus Enduro Boost - Endurance Boost -- this stacks with other boosts - so maybe don't track it?
