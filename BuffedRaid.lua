@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.27"
+local sVersion = "9.0.1.28"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -166,8 +166,6 @@ function addon:OnInitialize()
 
 		[39742] = true, -- Avoidance Formatic Foam - Deflect Boost -- even though this is marked as field tech, it does not stack with boosts
 		[39748] = true, -- QuickReact Formatic Foam - Deflect Critical Hit Boost
-		[35100] = true, -- Epochos Armor Boost - Armor Boost
-		[35106] = true, -- Epochos Resist Boost - Resist Boost
 		[35122] = true, -- Adventus Enduro Boost - Endurance Boost -- this stacks with other boosts - so maybe don't track it?
 		[39715] = true, -- Adventus Critical Hit Boost - Critical Hit Boost
 		[35093] = true, -- Adventus Strikethrough Boost - Unstable Strikethrough Boost
@@ -191,6 +189,11 @@ function addon:OnInitialize()
 		[35147] = true, -- Regenerative Draining Gel - Life Drain -- this stacks with Regenerative Impact Gel
 		[35213] = true, -- Regenerative Impact Gel - Siphon -- this stacks with Regenerative Draining Gel
 	}
+	self.tProtectionIds = {
+		--[32821] = true, -- bolster
+		[35100] = true, -- Epochos Armor Boost - Armor Boost
+		[35106] = true, -- Epochos Resist Boost - Resist Boost
+	}
 	self.tFoodIds = {
 		-- actually just use "Stuffed!" cuz I can't be bothered to add all food spellIds,
 		GameLib.GetSpell(48443):GetName(), -- "Stuffed!" from Exile Empanadas, we track food by this not by spellId
@@ -202,6 +205,7 @@ function addon:OnInitialize()
 	self.nTimerSpeed = 1
 	self.nLastPotionReport = 0
 	self.nLastFieldTechReport = 0
+	self.nLastProtectionReport = 0
 
 	self.bRaidInCombat = false
 	self.nRaidMembersInCombat = 0
@@ -210,6 +214,7 @@ function addon:OnInitialize()
 	self.tFoodIcons = {}
 	self.tPotionIcons = {}
 	self.tFieldTechIcons = {}
+	self.tProtectionIcons = {}
 
 	self.tClassToColor = {
 		-- Colors apparently defined by Duran by a forum post by Orbish who never got back to us with hex codes
@@ -234,12 +239,16 @@ function addon:OnEnable()
 	self.wBackground2:Show(true)
 	self.wBackground3 = GeminiGUI:Create(tBackgroundDef):GetInstance()
 	self.wBackground3:Show(true)
+	self.wBackground4 = GeminiGUI:Create(tBackgroundDef):GetInstance()
+	self.wBackground4:Show(true)
 
 	for i= 1, 40 do
 		self.tFoodIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tFoodIcons[i]:Show(false)
 		self.tPotionIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tPotionIcons[i]:Show(false)
+		self.tProtectionIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
+		self.tProtectionIcons[i]:Show(false)
 		self.tFieldTechIcons[i] = GeminiGUI:Create(tSingleBuffDef):GetInstance()
 		self.tFieldTechIcons[i]:Show(false)
 	end
@@ -423,9 +432,10 @@ end
 function addon:ResizeBackground()
 	local nGroupMemberCount = GroupLib.GetMemberCount()
 	local l,t,r,b = self.wAnchor:GetAnchorOffsets()
-	self.wBackground:SetAnchorOffsets(l-2, t+nOffsetFromTop-2, l+nIconSize+2, t+nOffsetFromTop+nGroupMemberCount*nIconSize+2)
+	self.wBackground:SetAnchorOffsets(l-2, t+nOffsetFromTop-2, l+nIconSize+5, t+nOffsetFromTop+nGroupMemberCount*nIconSize+2)
 	self.wBackground2:SetAnchorOffsets(l+nIconSize+2, t+nOffsetFromTop-2, l+2*nIconSize+5, t+nOffsetFromTop+nGroupMemberCount*nIconSize+2)
 	self.wBackground3:SetAnchorOffsets(l+nIconSize*2+2, t+nOffsetFromTop-2, l+3*nIconSize+5, t+nOffsetFromTop+nGroupMemberCount*nIconSize+2)
+	self.wBackground4:SetAnchorOffsets(l+nIconSize*3+2, t+nOffsetFromTop-2, l+4*nIconSize+5, t+nOffsetFromTop+nGroupMemberCount*nIconSize+2)
 end
 
 function addon:RepositionWindows()
@@ -435,7 +445,8 @@ function addon:RepositionWindows()
 	for k=1, 40 do
 		self.tFoodIcons[k]:SetAnchorOffsets(l, t+nOffsetFromTop+(k-1)*nIconSize, l+nIconSize, t+nOffsetFromTop+k*nIconSize)
 		self.tPotionIcons[k]:SetAnchorOffsets(l+nIconSize+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+2*nIconSize, t+nOffsetFromTop+k*nIconSize)
-		self.tFieldTechIcons[k]:SetAnchorOffsets(l+nIconSize*2+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+3*nIconSize, t+nOffsetFromTop+k*nIconSize)
+		self.tProtectionIcons[k]:SetAnchorOffsets(l+nIconSize*2+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+3*nIconSize, t+nOffsetFromTop+k*nIconSize)
+		self.tFieldTechIcons[k]:SetAnchorOffsets(l+nIconSize*3+3, t+nOffsetFromTop+(k-1)*nIconSize, 3+l+4*nIconSize, t+nOffsetFromTop+k*nIconSize)
 	end
 
 	self:ResizeBackground()
@@ -572,6 +583,10 @@ function addon:ReportToPlayer(unit)
 		if not fieldTechStuff then
 			self:Whisper(unit:GetName(), "You don't have any field tech buffs on. Poop a poot?")
 		end
+		local protectionStuff = self:FindBuffFromListById(unit, self.tProtectionIds)
+		if not protectionStuff then
+			self:Whisper(unit:GetName(), "You don't have any protection buffs on. Poop a poot?")
+		end
 	end
 end
 
@@ -613,9 +628,11 @@ end
 function addon:ReportPotionsToParty(bFromClick)
 	local sWithoutPotion = "Potionless (poop a poot?): "
 	local sWithoutFieldTech = "FieldTechless (poop a poot?): "
+	local sWithoutProtection = "Protectionless (poop a poot?): "
 	if self.nRaidMembersInCombat < 7 and not bFromClick then return end
 	local nPotionless = 0
 	local nFieldTechless = 0
+	local nProtectionless = 0
 	for k = 1, 40 do
 		local groupMember = GroupLib.GetGroupMember(k)
 		if groupMember then
@@ -630,6 +647,15 @@ function addon:ReportPotionsToParty(bFromClick)
 							sWithoutPotion = ("%s %s"):format(sWithoutPotion, unit:GetName())
 						else
 							sWithoutPotion = ("%s, %s"):format(sWithoutPotion, unit:GetName())
+						end
+					end
+					local protectionStuff = self:FindBuffFromListById(unit, self.tProtectionIds)
+					if not protectionStuff then
+						nProtectionless = nProtectionless + 1
+						if nProtectionless == 1 then
+							sWithoutProtection = ("%s %s"):format(sWithoutProtection, unit:GetName())
+						else
+							sWithoutProtection = ("%s, %s"):format(sWithoutProtection, unit:GetName())
 						end
 					end
 					local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
@@ -665,15 +691,27 @@ function addon:ReportPotionsToParty(bFromClick)
 	else
 		Print("Everyone has field tech!")
 	end
+	if nProtectionless > 0 then
+		if (self.nTime - self.nLastProtectionReport) > 1 then
+			self:ReportToChat(sWithoutProtection)
+			self.nLastProtectionReport = self.nTime
+		else
+			Print(("Can't spam party chat! Wait another: %.1f then try again."):format(5- self.nTime - self.nLastProtectionReport))
+		end
+	else
+		Print("Everyone has field tech!")
+	end
 end
 
 function addon:HideAll()
 	self.wBackground:Show(false)
 	self.wBackground2:Show(false)
 	self.wBackground3:Show(false)
+	self.wBackground4:Show(false)
 	for k = 1, 40 do
 		self.tFoodIcons[k]:Show(false)
 		self.tPotionIcons[k]:Show(false)
+		self.tProtectionIcons[k]:Show(false)
 		self.tFieldTechIcons[k]:Show(false)
 	end
 end
@@ -699,6 +737,7 @@ function addon:OnUpdate()
 	self.wBackground:Show(true)
 	self.wBackground2:Show(true)
 	self.wBackground3:Show(true)
+	self.wBackground4:Show(true)
 
 	for k = 1, 40 do
 		local groupMember = GroupLib.GetGroupMember(k)
@@ -733,6 +772,19 @@ function addon:OnUpdate()
 					else
 						self.tPotionIcons[k]:FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
 						self.tPotionIcons[k]:SetTooltip(sName)
+					end
+
+					local protectionStuff = self:FindBuffFromListById(unit, self.tProtectionIds)
+
+					self.tProtectionIcons[k]:Show(bGrouped)
+					self.tProtectionIcons[k]:SetData(unit)
+					if protectionStuff then
+						self.tProtectionIcons[k]:FindChild("Icon"):SetSprite(protectionStuff[1])
+						self.tProtectionIcons[k]:SetTooltip(sName.." - " ..protectionStuff[2])
+						self.tProtectionIcons[k]:FindChild("Name"):SetText("")
+					else
+						self.tProtectionIcons[k]:FindChild("Icon"):SetSprite(unit:IsDead() and "CRB_GuildSprites:sprGuild_Skull" or "ClientSprites:LootCloseBox_Holo")
+						self.tProtectionIcons[k]:SetTooltip(sName)
 					end
 
 					local fieldTechStuff = self:FindBuffFromListById(unit, self.tFieldTechtIds)
