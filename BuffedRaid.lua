@@ -16,7 +16,7 @@ require "GroupLib"
 require "ChatSystemLib"
 require "MatchingGame"
 
-local sVersion = "9.0.1.28"
+local sVersion = "9.0.1.29"
 
 -----------------------------------------------------------------------------------------------
 -- Upvalues
@@ -181,7 +181,7 @@ function addon:OnInitialize()
 	self.tFieldTechtIds = {
 		--[32821] = true, -- bolster
 		[35213] = true, -- Liquid Confidence - Siphon
-		[35147] = true, -- Life Drain
+		[35145] = true, -- Life Drain
 		[35164] = true, -- Bioreactive Acid Membrane - Cleave
 
 		[35166] = true, -- Echo Impact Synchronizer - Cleave
